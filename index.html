@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>JSON to Dart Converter</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-title">Dart QuickType</h1>
+            <div class="nav-links">
+                <a href="#" class="nav-link">Github</a>
+                <a href="#" class="nav-link">Quicktype</a>
+                <a href="#" class="nav-link">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- History Sidebar -->
+        <div class="history-panel">
+
+            <h2>History</h2>
+            <div id="history-list" class="history-list">
+                <!-- History items will be populated here -->
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="input-panel">
+            <div class="class-name-section">
+                <label for="class-name">
+                    <h2>Class name</h2>
+                </label>
+                <input type="text" id="class-name" class="class-name-input" placeholder="Enter class name..." />
+            </div>
+
+            <div class="options-section">
+                <div class="options-grid">
+                    <div class="options-column">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-tojson" checked>
+                            <label for="gen-tojson">Generate <span class="code">toJson</span> method</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-copywith" checked>
+                            <label for="gen-copywith">Generate <span class="code">copyWith</span> method</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-tostring" checked>
+                            <label for="gen-tostring">Generate <span class="code">toString</span> method</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-keys" checked>
+                            <label for="gen-keys">Generate JSON keys</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-num">
+                            <label for="use-num">Always use <span class="code">num</span> type for number</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-serializable" checked>
+                            <label for="use-serializable">Use <span class="code">JSONSerializable</span></label>
+                        </div>
+                    </div>
+                    <div class="options-column">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-equatable" checked>
+                            <label for="use-equatable">Use <span class="code">Equatable</span></label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-default">
+                            <label for="use-default">Use default value
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">int, double, bool, String won't be null and will replace
+                                        with default value.</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-comment">
+                            <label for="gen-comment">Generate json as comment
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate json into model class as comment at the bottom
+                                        of the file</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox-item model-new-highlight">
+                            <input type="checkbox" id="model-new">
+                            <label for="model-new"><strong>Model New</strong>
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate model using custom base Model class with safe
+                                        parsing methods</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox-item singleton-highlight">
+                            <input type="checkbox" id="singleton-pattern">
+                            <label for="singleton-pattern">نمط Singleton
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate singleton pattern with ClassName._() and static
+                                        ClassName i</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox-item local-data-highlight">
+                            <input type="checkbox" id="local-save" checked>
+                            <label for="local-save">حفظ البيانات لوكل
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate save() method for local storage</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox-item local-data-highlight">
+                            <input type="checkbox" id="local-clear" checked>
+                            <label for="local-clear">كلير البيانات لوكل
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate clear() method for local storage</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="checkbox-item local-data-highlight">
+                            <input type="checkbox" id="local-get" checked>
+                            <label for="local-get">جلب البيانات لوكل
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate get() method for local storage</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="json-input-section">
+                <textarea id="json-input" class="json-editor" placeholder="Paste your JSON here..."></textarea>
+            </div>
+
+            <button id="convert-btn" class="convert-btn">Convert</button>
+        </div>
+
+        <!-- Output Section -->
+        <div class="output-panel">
+            <h2>Output</h2>
+            <div class="output-section">
+                <textarea id="dart-output" class="dart-editor" readonly
+                    placeholder="Generated Dart class will appear here..."></textarea>
+            </div>
+            <button id="copy-btn" class="copy-btn">Copy Code</button>
+        </div>
+    </div>
+
+    <script src="script/dart-generator.js"></script>
+    <script src="script/model-new-generator.js"></script>
+    <script src="script/script.js"></script>
+    <script src="script/quicktype-mock.js"></script>
+    <script src="script/history.js"></script>
+
+</body>
+
+</html>

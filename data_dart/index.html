@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dart QuickType</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #212529;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #1a1a1a;
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid #2d2d2d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-link {
+            color: #adb5bd;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 54px);
+        }
+
+        /* History Panel */
+        .history-panel {
+            width: 200px;
+            background: #1a1a1a;
+            border-right: 1px solid #2d2d2d;
+            padding: 1.25rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .history-panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            font-weight: 400;
+        }
+
+        .history-item {
+            background: transparent;
+            border: 1px solid #495057;
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.15s;
+        }
+
+        .history-item:hover {
+            background: #2d2d2d;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            gap: 0;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            overflow: hidden;
+        }
+
+        .panel.input-panel {
+            background: #212529;
+            border-right: 1px solid #2d2d2d;
+        }
+
+        .panel.output-panel {
+            background: #212529;
+        }
+
+        .panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #fff;
+            font-weight: 400;
+        }
+
+        /* Form Control */
+        .form-control {
+            background: #343a40;
+            border: 1px solid #495057;
+            color: #fff;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #0d6efd;
+        }
+
+        /* Checkboxes Section */
+        .checkboxes-section {
+            margin: 0.75rem 0;
+        }
+
+        .checkbox-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            accent-color: #0d6efd;
+            flex-shrink: 0;
+        }
+
+        .checkbox-item label {
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .code {
+            color: #00d4ff;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #6c757d;
+            border-radius: 50%;
+            font-size: 11px;
+            color: #adb5bd;
+            cursor: help;
+            margin-left: 0.25rem;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1d20;
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            border: 1px solid #495057;
+            width: 220px;
+            font-size: 0.75rem;
+            z-index: 1000;
+            white-space: normal;
+            text-align: left;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+        }
+
+        /* Editor */
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .editor {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid #495057;
+            color: #d4d4d4;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            overflow: auto;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 0.65rem;
+            margin-top: 0.75rem;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #0b5ed7;
+        }
+
+        .btn-success {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #0b5ed7;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #212529;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #495057;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">Dart QuickType</div>
+        <div class="nav-links">
+            <a href="#" class="nav-link">Github</a>
+            <a href="#" class="nav-link">Quicktype</a>
+            <a href="#" class="nav-link">About</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <!-- Input Panel -->
+            <div class="panel input-panel">
+                <h2>Class name</h2>
+                <input type="text" id="class-name" class="form-control" value="Model">
+
+                <div class="checkboxes-section">
+                    <div class="checkbox-row">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-json" checked>
+                            <label for="gen-json">Generate <span class="code">toJson</span> method</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-serializable">
+                            <label for="use-serializable">Use <span class="code">JSONSerializable</span></label>
+                        </div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-cpy">
+                            <label for="gen-cpy">Generate <span class="code">copyWith</span> method</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-equatable">
+                            <label for="use-equatable">Use <span class="code">Equatable</span></label>
+                        </div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-ts">
+                            <label for="gen-ts">Generate <span class="code">toString</span> method</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-default">
+                            <label for="use-default">Use default value
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Properties will have default values instead of being
+                                        nullable. String = "", int = 0, double = 0.0, bool = false, List = []</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-key">
+                            <label for="gen-key">Generate JSON keys</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="gen-comment">
+                            <label for="gen-comment">Generate json as comment
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Generate json into model class as comment at the bottom
+                                        of the file</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-num">
+                            <label for="use-num">Always use <span class="code">num</span> type for number</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="use-base-model">
+                            <label for="use-base-model">Use Base Model
+                                <span class="tooltip">ⓘ
+                                    <span class="tooltip-text">Extend from base Model class with helper methods
+                                        (stringFromJson, intFromJson, etc.)</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-wrapper">
+                    <textarea id="json-input" class="editor"></textarea>
+                    <button id="convert-btn" class="btn btn-primary">Convert</button>
+                </div>
+            </div>
+
+            <!-- Output Panel -->
+            <div class="panel output-panel">
+                <h2>Output</h2>
+                <div class="editor-wrapper">
+                    <textarea id="dart-output" class="editor" readonly></textarea>
+                    <button id="copy-btn" class="btn btn-success">Copy Code</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="history-panel">
+            <h2>History</h2>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Professional DartGenerator with enhanced default value handling
+        class DartGenerator {
+            constructor() {
+                this.classRegistry = new Map();
+                this.generatedClasses = [];
+                this.usedNames = new Set();
+                this.structureToClass = new Map();
+
+                // Default values mapping for professional code generation
+                this.defaultValues = {
+                    'String': '""',
+                    'int': '0',
+                    'double': '0.0',
+                    'num': '0',
+                    'bool': 'false',
+                    'List': '[]',
+                    'Map': '{}',
+                    'dynamic': 'null'
+                };
+            }
+
+            generateDartClass(className, jsonString, options = {}) {
+                try {
+                    this.classRegistry.clear();
+                    this.generatedClasses = [];
+                    this.usedNames.clear();
+                    this.structureToClass.clear();
+                    this.originalJson = jsonString;
+
+                    const jsonObj = JSON.parse(jsonString);
+
+                    if (Array.isArray(jsonObj)) {
+                        if (jsonObj.length === 0) throw new Error('Cannot generate class from empty array');
+                        this.processObjectIterative(className, jsonObj[0], options);
+                    } else {
+                        this.processObjectIterative(className, jsonObj, options);
+                    }
+
+                    return this.buildOutput(options);
+                } catch (error) {
+                    throw new Error('Invalid JSON: ' + error.message);
+                }
+            }
+
+            processObjectIterative(rootClassName, rootObj, options = {}) {
+                const queue = [{ className: rootClassName, obj: rootObj, parent: null }];
+                const processedStructures = new Map();
+
+                while (queue.length > 0) {
+                    const { className, obj, parent } = queue.shift();
+
+                    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) continue;
+
+                    const structureId = this.getStructureId(obj);
+
+                    if (processedStructures.has(structureId)) {
+                        continue;
+                    }
+
+                    const cleanClassName = this.generateUniqueClassName(className);
+                    processedStructures.set(structureId, cleanClassName);
+                    this.structureToClass.set(structureId, cleanClassName);
+                    this.usedNames.add(cleanClassName);
+
+                    const properties = [];
+                    const dependencies = new Set();
+
+                    Object.entries(obj).forEach(([key, value]) => {
+                        if (!this.isValidDartVariableName(key)) return;
+
+                        const camelName = this.toCamelCase(key);
+                        let dartType = 'dynamic';
+                        let dependsOn = null;
+                        let defaultValue = null;
+
+                        if (value === null) {
+                            dartType = 'dynamic';
+                            defaultValue = 'null';
+                        } else if (typeof value === 'string') {
+                            dartType = 'String';
+                            defaultValue = '""';
+                        } else if (typeof value === 'boolean') {
+                            dartType = 'bool';
+                            defaultValue = 'false';
+                        } else if (typeof value === 'number') {
+                            if (options.useNum) {
+                                dartType = 'num';
+                                defaultValue = '0';
+                            } else {
+                                dartType = Number.isInteger(value) ? 'int' : 'double';
+                                defaultValue = Number.isInteger(value) ? '0' : '0.0';
+                            }
+                        } else if (Array.isArray(value)) {
+                            if (value.length === 0) {
+                                dartType = 'List<dynamic>';
+                                defaultValue = '[]';
+                            } else {
+                                const firstItem = value[0];
+                                if (typeof firstItem === 'object' && firstItem !== null) {
+                                    const itemStructureId = this.getStructureId(firstItem);
+
+                                    if (processedStructures.has(itemStructureId)) {
+                                        const existingClassName = processedStructures.get(itemStructureId);
+                                        dartType = `List<${existingClassName}>`;
+                                        dependsOn = existingClassName;
+                                        defaultValue = '[]';
+                                    } else {
+                                        const itemClassName = this.generateNestedClassName(key, cleanClassName);
+                                        dartType = `List<${itemClassName}>`;
+                                        dependsOn = itemClassName;
+                                        defaultValue = '[]';
+                                        queue.push({ className: itemClassName, obj: firstItem, parent: cleanClassName });
+                                    }
+                                } else {
+                                    const itemType = this.getSimpleType(firstItem, options);
+                                    dartType = `List<${itemType}>`;
+                                    defaultValue = '[]';
+                                }
+                            }
+                        } else if (typeof value === 'object') {
+                            const nestedStructureId = this.getStructureId(value);
+
+                            if (processedStructures.has(nestedStructureId)) {
+                                const existingClassName = processedStructures.get(nestedStructureId);
+                                dartType = existingClassName;
+                                dependsOn = existingClassName;
+                                defaultValue = null; // Objects don't have simple default values
+                            } else {
+                                const nestedClassName = this.generateNestedClassName(key, cleanClassName);
+                                dartType = nestedClassName;
+                                dependsOn = nestedClassName;
+                                defaultValue = null;
+                                queue.push({ className: nestedClassName, obj: value, parent: cleanClassName });
+                            }
+                        }
+
+                        properties.push({
+                            name: camelName,
+                            dartType,
+                            jsonKey: key,
+                            dependsOn,
+                            defaultValue
+                        });
+                        if (dependsOn) dependencies.add(dependsOn);
+                    });
+
+                    const classInfo = {
+                        name: cleanClassName,
+                        properties,
+                        dependencies: Array.from(dependencies),
+                        structureId
+                    };
+
+                    this.classRegistry.set(cleanClassName, classInfo);
+                    this.generatedClasses.push(classInfo);
+                }
+            }
+
+            generateNestedClassName(key, parentClassName) {
+                let baseName = this.capitalize(this.toCamelCase(key));
+                const lowerKey = key.toLowerCase();
+
+                const specialNames = {
+                    'data': 'Datum',
+                    'links': parentClassName + 'Links',
+                    'attributes': parentClassName + 'Attributes',
+                    'relationships': parentClassName + 'Relationships',
+                    'author': 'Author',
+                    'user': 'User',
+                    'profile': 'Profile',
+                    'settings': 'Settings'
+                };
+
+                return specialNames[lowerKey] || baseName;
+            }
+
+            getSimpleType(value, options = {}) {
+                if (typeof value === 'string') return 'String';
+                if (typeof value === 'boolean') return 'bool';
+                if (typeof value === 'number') {
+                    if (options.useNum) return 'num';
+                    return Number.isInteger(value) ? 'int' : 'double';
+                }
+                return 'dynamic';
+            }
+
+            getStructureId(obj) {
+                const keys = Object.keys(obj).sort();
+                return keys.map(key => {
+                    const value = obj[key];
+                    let type = typeof value;
+                    if (Array.isArray(value)) {
+                        type = value.length > 0 && typeof value[0] === 'object' ? 'array_object' : 'array_primitive';
+                    } else if (type === 'object' && value !== null) {
+                        type = 'object';
+                    }
+                    return `${key}:${type}`;
+                }).join('|');
+            }
+
+            buildOutput(options) {
+                let result = '';
+
+                // Professional imports handling
+                const imports = this.generateImports(options);
+                if (imports.length > 0) {
+                    result = imports.join('\n') + '\n\n';
+                }
+
+                // Generate classes in proper order
+                this.generatedClasses.forEach((classInfo, index) => {
+                    if (index > 0) result += '\n\n';
+                    result += this.generateSingleClass(classInfo, options);
+                });
+
+                // Add JSON comment if requested
+                if (options.generateComment && this.originalJson) {
+                    result += '\n\n' + this.generateJsonComment();
+                }
+
+                return result;
+            }
+
+            generateImports(options) {
+                const imports = [];
+
+                if (options.useBaseModel) {
+                    imports.push("import 'base.dart';");
+                } else {
+                    if (options.useSerializable) {
+                        imports.push("import 'package:json_annotation/json_annotation.dart';");
+                    }
+                    if (options.useEquatable) {
+                        imports.push("import 'package:equatable/equatable.dart';");
+                    }
+                    if (options.useSerializable) {
+                        imports.push('');
+                        imports.push("part 'model.g.dart';");
+                    }
+                }
+
+                return imports;
+            }
+
+            generateJsonComment() {
+                return JSON.stringify(JSON.parse(this.originalJson), null, 2)
+                    .split('\n')
+                    .map(line => '// ' + line)
+                    .join('\n');
+            }
+
+            generateSingleClass(classInfo, options) {
+                const { name, properties } = classInfo;
+                let code = '';
+
+                // Class annotations
+                if (options.useSerializable && !options.useBaseModel) {
+                    code += '@JsonSerializable()\n';
+                }
+
+                // Class declaration with proper inheritance
+                const extendsClause = this.getExtendsClause(options);
+                code += `class ${name}${extendsClause} {\n`;
+
+                if (options.useBaseModel) {
+                    code += this.generateBaseModelClass(name, properties, options);
+                } else {
+                    code += this.generateRegularClass(name, properties, options);
+                }
+
+                code += '\n}';
+                return code;
+            }
+
+            getExtendsClause(options) {
+                if (options.useBaseModel) {
+                    return ' extends Model';
+                } else if (options.useEquatable) {
+                    return ' extends Equatable';
+                }
+                return '';
+            }
+
+            generateBaseModelClass(name, properties, options) {
+                let code = '';
+
+                // Properties with late keyword
+                properties.forEach(prop => {
+                    const nullable = options.useDefaultValue ? '' : '?';
+                    code += `    late ${prop.dartType}${nullable} ${prop.name};\n`;
+                });
+
+                code += '\n';
+
+                // Constructor
+                code += `    ${name}.fromJson([Map<String, dynamic>? json]) {\n`;
+
+                // Add id if not present
+                const hasId = properties.some(p => p.name === 'id');
+                if (!hasId) {
+                    code += `        id = stringFromJson(json, "id");\n`;
+                }
+
+                properties.forEach(prop => {
+                    const helperMethod = this.getBaseModelHelperMethod(prop.dartType);
+                    if (options.useDefaultValue && prop.defaultValue) {
+                        code += `        ${prop.name} = ${helperMethod}(json, "${prop.jsonKey}") ?? ${prop.defaultValue};\n`;
+                    } else {
+                        code += `        ${prop.name} = ${helperMethod}(json, "${prop.jsonKey}");\n`;
+                    }
+                });
+
+                code += '    }\n';
+
+                // toJson method for base model
+                if (options.generateToJson) {
+                    code += this.generateBaseModelToJson(properties, hasId);
+                }
+
+                return code;
+            }
+
+            generateRegularClass(name, properties, options) {
+                let code = '';
+
+                // Constructor
+                code += this.generateConstructor(name, properties, options);
+
+                // Properties
+                code += this.generateProperties(properties, options);
+
+                // fromJson factory
+                if (!options.useSerializable) {
+                    code += this.generateFromJsonFactory(name, properties, options);
+                } else {
+                    code += `    factory ${name}.fromJson(Map<String, dynamic> json) => _${name}FromJson(json);\n\n`;
+                }
+
+                // toJson method
+                if (options.generateToJson) {
+                    code += this.generateToJsonMethod(name, properties, options);
+                }
+
+                // copyWith method
+                if (options.generateCopyWith) {
+                    code += this.generateCopyWithMethod(name, properties, options);
+                }
+
+                // toString method or Equatable props
+                if (options.generateToString) {
+                    code += this.generateToStringMethod(name, properties, options);
+                }
+
+                return code;
+            }
+
+            generateConstructor(name, properties, options) {
+                let code = `    ${name}({\n`;
+
+                properties.forEach(prop => {
+                    if (options.useDefaultValue && prop.defaultValue && this.isPrimitiveType(prop.dartType)) {
+                        code += `        this.${prop.name} = ${prop.defaultValue},\n`;
+                    } else {
+                        const required = options.useDefaultValue ? '' : 'required ';
+                        code += `        ${required}this.${prop.name},\n`;
+                    }
+                });
+
+                code += '    });\n\n';
+                return code;
+            }
+
+            generateProperties(properties, options) {
+                let code = '';
+
+                properties.forEach((prop, i) => {
+                    if (options.generateKeys && options.useSerializable) {
+                        code += `    @JsonKey(name: '${prop.jsonKey}')\n`;
+                    }
+
+                    const nullable = options.useDefaultValue ? '' : '?';
+                    code += `    final ${prop.dartType}${nullable} ${prop.name};\n`;
+
+                    if (i < properties.length - 1) code += '\n';
+                });
+
+                code += '\n';
+                return code;
+            }
+
+            generateFromJsonFactory(name, properties, options) {
+                let code = `    factory ${name}.fromJson(Map<String, dynamic> json) {\n`;
+                code += `        return ${name}(\n`;
+
+                properties.forEach(prop => {
+                    let assignment = `            ${prop.name}: `;
+
+                    if (prop.dartType.startsWith('List<')) {
+                        const itemType = prop.dartType.match(/List<(.+)>/)[1];
+                        if (this.isPrimitiveType(itemType)) {
+                            assignment += `json["${prop.jsonKey}"] == null ? [] : List<${itemType}>.from(json["${prop.jsonKey}"])`;
+                        } else {
+                            assignment += `json["${prop.jsonKey}"] == null ? [] : List<${itemType}>.from(json["${prop.jsonKey}"]!.map((x) => ${itemType}.fromJson(x)))`;
+                        }
+                    } else if (this.isPrimitiveType(prop.dartType)) {
+                        if (options.useDefaultValue && prop.defaultValue) {
+                            assignment += `json["${prop.jsonKey}"] ?? ${prop.defaultValue}`;
+                        } else {
+                            assignment += `json["${prop.jsonKey}"]`;
+                        }
+                    } else {
+                        assignment += `json["${prop.jsonKey}"] == null ? null : ${prop.dartType}.fromJson(json["${prop.jsonKey}"])`;
+                    }
+
+                    code += assignment + ',\n';
+                });
+
+                code += '        );\n    }\n\n';
+                return code;
+            }
+
+            generateToJsonMethod(name, properties, options) {
+                let code = '';
+
+                if (options.useSerializable) {
+                    code += `    Map<String, dynamic> toJson() => _${name}ToJson(this);\n\n`;
+                } else {
+                    code += '    Map<String, dynamic> toJson() => {\n';
+                    properties.forEach(prop => {
+                        let value = prop.name;
+                        if (prop.dartType.startsWith('List<')) {
+                            const itemType = prop.dartType.match(/List<(.+)>/)[1];
+                            if (!this.isPrimitiveType(itemType)) {
+                                value = `${prop.name}${options.useDefaultValue ? '' : '?'}.map((x) => x.toJson()).toList()`;
+                            }
+                        } else if (!this.isPrimitiveType(prop.dartType)) {
+                            value = `${prop.name}${options.useDefaultValue ? '' : '?'}.toJson()`;
+                        }
+                        code += `        "${prop.jsonKey}": ${value},\n`;
+                    });
+                    code += '    };\n\n';
+                }
+
+                return code;
+            }
+
+            generateBaseModelToJson(properties, hasId) {
+                let code = '\n    @override\n    Map<String, dynamic> toJson() => {\n';
+
+                if (!hasId) {
+                    code += '        "id": id,\n';
+                }
+
+                properties.forEach(prop => {
+                    let value = prop.name;
+                    if (prop.dartType.startsWith('List<')) {
+                        const itemType = prop.dartType.match(/List<(.+)>/)[1];
+                        if (!this.isPrimitiveType(itemType)) {
+                            value = `${prop.name}.map((x) => x.toJson()).toList()`;
+                        }
+                    } else if (!this.isPrimitiveType(prop.dartType)) {
+                        value = `${prop.name}.toJson()`;
+                    }
+                    code += `        "${prop.jsonKey}": ${value},\n`;
+                });
+
+                code += '    };\n';
+                return code;
+            }
+
+            generateCopyWithMethod(name, properties, options) {
+                let code = `    ${name} copyWith({\n`;
+
+                properties.forEach(prop => {
+                    const nullable = options.useDefaultValue ? '?' : '';
+                    code += `        ${prop.dartType}${nullable} ${prop.name},\n`;
+                });
+
+                code += '    }) => ${name}(\n';
+
+                properties.forEach(prop => {
+                    code += `        ${prop.name}: ${prop.name} ?? this.${prop.name},\n`;
+                });
+
+                code += '    );\n\n';
+                return code;
+            }
+
+            generateToStringMethod(name, properties, options) {
+                let code = '';
+
+                if (options.useEquatable) {
+                    const propsList = properties.map(p => p.name).join(', ');
+                    code += `    @override\n    List<Object?> get props => [${propsList}];\n\n`;
+                } else {
+                    const propsString = properties.map(p => `${p.name}: \$${p.name}`).join(', ');
+                    code += `    @override\n    String toString() => '${name}(${propsString})';\n\n`;
+                }
+
+                return code;
+            }
+
+            getBaseModelHelperMethod(dartType) {
+                const helperMethods = {
+                    'String': 'stringFromJson',
+                    'int': 'intFromJson',
+                    'double': 'doubleFromJson',
+                    'num': 'numFromJson',
+                    'bool': 'boolFromJson'
+                };
+
+                if (helperMethods[dartType]) {
+                    return helperMethods[dartType];
+                }
+
+                if (dartType.startsWith('List<')) {
+                    return 'listFromJson';
+                }
+
+                return 'objectFromJson';
+            }
+
+            isPrimitiveType(type) {
+                return ['String', 'int', 'double', 'bool', 'num', 'dynamic'].includes(type);
+            }
+
+            generateUniqueClassName(baseName) {
+                let name = this.capitalize(this.toCamelCase(baseName));
+                let counter = 1;
+                while (this.usedNames.has(name)) {
+                    name = this.capitalize(this.toCamelCase(baseName)) + counter++;
+                }
+                return name;
+            }
+
+            isValidDartVariableName(name) {
+                return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
+            }
+
+            toCamelCase(str) {
+                return str.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
+            }
+
+            capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+        }
+
+        // Professional App Controller
+        class App {
+            constructor() {
+                this.generator = new DartGenerator();
+                this.history = [];
+                this.init();
+            }
+
+            init() {
+                this.loadHistory();
+                this.bindEvents();
+                this.loadSampleJSON();
+            }
+
+            bindEvents() {
+                document.getElementById('convert-btn').addEventListener('click', () => this.convert());
+                document.getElementById('copy-btn').addEventListener('click', () => this.copy());
+
+                // Enhanced auto-convert with debouncing
+                const checkboxes = [
+                    'gen-json', 'gen-cpy', 'gen-ts', 'gen-key', 'use-num',
+                    'use-serializable', 'use-equatable', 'use-default',
+                    'gen-comment', 'use-base-model'
+                ];
+
+                checkboxes.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.addEventListener('change', () => {
+                            this.debouncedConvert();
+                        });
+                    }
+                });
+
+                // Auto-convert on class name change
+                document.getElementById('class-name').addEventListener('input', () => {
+                    this.debouncedConvert();
+                });
+            }
+
+            debouncedConvert() {
+                clearTimeout(this.convertTimeout);
+                this.convertTimeout = setTimeout(() => {
+                    const jsonInput = document.getElementById('json-input');
+                    if (jsonInput && jsonInput.value.trim()) {
+                        this.convert();
+                    }
+                }, 300);
+            }
+
+            loadSampleJSON() {
+                const sample = [
+                    {
+                        "albumId": 1,
+                        "id": 1,
+                        "title": "accusamus beatae ad facilis cum similique qui sunt",
+                        "url": "https://via.placeholder.com/600/92c952",
+                        "thumbnailUrl": "https://via.placeholder.com/150/92c952",
+                        "isActive": true,
+                        "rating": 4.5
+                    },
+                    {
+                        "albumId": 1,
+                        "id": 2,
+                        "title": "reprehenderit est deserunt velit ipsam",
+                        "url": "https://via.placeholder.com/600/771796",
+                        "thumbnailUrl": "https://via.placeholder.com/150/771796",
+                        "isActive": false,
+                        "rating": 3.8
+                    }
+                ];
+
+                document.getElementById('json-input').value = JSON.stringify(sample, null, 4);
+            }
+
+            convert() {
+                const jsonInput = document.getElementById('json-input').value.trim();
+                const className = document.getElementById('class-name').value.trim() || 'Model';
+
+                if (!jsonInput) return;
+
+                try {
+                    const options = this.getOptions();
+                    const dartCode = this.generator.generateDartClass(className, jsonInput, options);
+                    document.getElementById('dart-output').value = dartCode;
+                    this.addToHistory(className, jsonInput);
+                } catch (error) {
+                    document.getElementById('dart-output').value = `// Error: ${error.message}`;
+                }
+            }
+
+            getOptions() {
+                return {
+                    generateToJson: document.getElementById('gen-json').checked,
+                    generateCopyWith: document.getElementById('gen-cpy').checked,
+                    generateToString: document.getElementById('gen-ts').checked,
+                    generateKeys: document.getElementById('gen-key').checked,
+                    useNum: document.getElementById('use-num').checked,
+                    useSerializable: document.getElementById('use-serializable').checked,
+                    useEquatable: document.getElementById('use-equatable').checked,
+                    useDefaultValue: document.getElementById('use-default').checked,
+                    generateComment: document.getElementById('gen-comment').checked,
+                    useBaseModel: document.getElementById('use-base-model').checked
+                };
+            }
+
+            copy() {
+                const output = document.getElementById('dart-output');
+                output.select();
+                document.execCommand('copy');
+
+                // Visual feedback
+                const button = document.getElementById('copy-btn');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 1000);
+            }
+
+            addToHistory(className, json) {
+                const entry = {
+                    className,
+                    json,
+                    time: new Date().toLocaleString(),
+                    preview: this.generatePreview(json)
+                };
+
+                this.history.unshift(entry);
+                if (this.history.length > 10) {
+                    this.history = this.history.slice(0, 10);
+                }
+
+                this.saveHistory();
+                this.renderHistory();
+            }
+
+            generatePreview(json) {
+                try {
+                    const obj = JSON.parse(json);
+                    if (Array.isArray(obj)) {
+                        return `Array[${obj.length}]`;
+                    }
+                    const keys = Object.keys(obj);
+                    return keys.slice(0, 3).join(', ') + (keys.length > 3 ? '...' : '');
+                } catch {
+                    return 'Invalid JSON';
+                }
+            }
+
+            renderHistory() {
+                const container = document.getElementById('history-list');
+                container.innerHTML = this.history.map((item, i) =>
+                    `<div class="history-item" onclick="app.selectHistory(${i})" title="${item.preview}">
+                        ${item.className}
+                    </div>`
+                ).join('');
+            }
+
+            selectHistory(index) {
+                const item = this.history[index];
+                document.getElementById('class-name').value = item.className;
+                document.getElementById('json-input').value = item.json;
+                this.convert();
+            }
+
+            saveHistory() {
+                try {
+                    localStorage.setItem('dart-history', JSON.stringify(this.history));
+                } catch (e) {
+                    console.warn('Failed to save history:', e);
+                }
+            }
+
+            loadHistory() {
+                try {
+                    this.history = JSON.parse(localStorage.getItem('dart-history') || '[]');
+                    this.renderHistory();
+                } catch (e) {
+                    this.history = [];
+                }
+            }
+        }
+
+        const app = new App();
+    </script>
+</body>
+
+</html>
