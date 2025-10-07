@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dart QuickType</title>
+    <link href="prism-tomorrow.min.css" rel="stylesheet" id="theme-link">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #212529;
+            color: #e0e0e0;
+            overflow: hidden
+        }
+
+        .navbar {
+            background: #1a1a1a;
+            padding: .75rem 1.5rem;
+            border-bottom: 1px solid #2d2d2d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .navbar-brand {
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem
+        }
+
+        .nav-link {
+            color: #adb5bd;
+            text-decoration: none;
+            font-size: .9rem
+        }
+
+        .nav-link:hover {
+            color: #fff
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 54px)
+        }
+
+        .history-panel {
+            width: 200px;
+            background: #1a1a1a;
+            border-right: 1px solid #2d2d2d;
+            padding: 1.25rem;
+            overflow-y: auto;
+            flex-shrink: 0
+        }
+
+        .history-panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            font-weight: 400
+        }
+
+        .history-item {
+            background: 0 0;
+            border: 1px solid #495057;
+            color: #fff;
+            padding: .5rem .75rem;
+            margin-bottom: .5rem;
+            cursor: pointer;
+            font-size: .9rem;
+            transition: background .15s
+        }
+
+        .history-item:hover {
+            background: #2d2d2d
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            gap: 0
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            overflow: hidden
+        }
+
+        .panel.input-panel {
+            background: #212529;
+            border-right: 1px solid #2d2d2d
+        }
+
+        .panel.output-panel {
+            background: #212529
+        }
+
+        .panel h2 {
+            font-size: 1.5rem;
+            margin-bottom: .75rem;
+            color: #fff;
+            font-weight: 400
+        }
+
+        .theme-selector {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: .75rem
+        }
+
+        .theme-selector label {
+            color: #e0e0e0;
+            font-size: .9rem;
+            white-space: nowrap
+        }
+
+        .form-control,
+        .theme-select {
+            background: #343a40;
+            border: 1px solid #495057;
+            color: #fff;
+            padding: .5rem .75rem;
+            border-radius: .25rem;
+            font-size: .95rem
+        }
+
+        .theme-select {
+            cursor: pointer;
+            flex: 1
+        }
+
+        .form-control {
+            margin-bottom: .75rem;
+            width: 100%
+        }
+
+        .form-control:focus,
+        .theme-select:focus {
+            outline: 0;
+            border-color: #0d6efd
+        }
+
+        .theme-select option {
+            background: #343a40;
+            color: #fff
+        }
+
+        .checkboxes-section {
+            margin: .75rem 0
+        }
+
+        .checkbox-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .5rem;
+            margin-bottom: .75rem
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: .5rem
+        }
+
+        .checkbox-item input[type=checkbox] {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            accent-color: #0d6efd;
+            flex-shrink: 0
+        }
+
+        .checkbox-item label {
+            color: #e0e0e0;
+            font-size: .9rem;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: .25rem
+        }
+
+        .code {
+            color: #00d4ff;
+            font-family: Consolas, monospace;
+            font-size: .85rem
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #6c757d;
+            border-radius: 50%;
+            font-size: 11px;
+            color: #adb5bd;
+            cursor: help;
+            margin-left: .25rem
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            position: absolute;
+            bottom: 130%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1d20;
+            color: #fff;
+            padding: .5rem;
+            border-radius: .25rem;
+            border: 1px solid #495057;
+            width: 220px;
+            font-size: .75rem;
+            z-index: 1000;
+            white-space: normal;
+            text-align: left
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0
+        }
+
+        .editor {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid #495057;
+            color: #d4d4d4;
+            padding: 1rem;
+            font-family: Consolas, Monaco, monospace;
+            font-size: .9rem;
+            line-height: 1.5;
+            resize: none;
+            outline: 0;
+            overflow: auto
+        }
+
+        #dart-output-pre {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid #495057;
+            overflow: auto;
+            margin: 0;
+            display: none
+        }
+
+        #dart-output-pre.active {
+            display: block
+        }
+
+        #dart-output.hidden {
+            display: none
+        }
+
+        pre[class*=language-] {
+            background: #1e1e1e !important;
+            margin: 0;
+            padding: 1rem;
+            height: 100%
+        }
+
+        code[class*=language-] {
+            color: #d4d4d4;
+            font-family: Consolas, Monaco, monospace;
+            font-size: .9rem;
+            line-height: 1.5
+        }
+
+        .btn {
+            width: 100%;
+            padding: .65rem;
+            margin-top: .75rem;
+            border: none;
+            border-radius: .25rem;
+            font-size: .95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            color: #fff
+        }
+
+        .btn-primary:hover {
+            background: #0b5ed7
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #212529
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #495057
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">JSON TO DART</div>
+
+    </nav>
+    <div class="main-container">
+        <div class="content-area">
+            <div class="panel input-panel">
+                <div class="theme-selector"><label for="theme-select">Theme:</label><select id="theme-select"
+                        class="theme-select">
+                        <option value="tomorrow">VS Code Dark</option>
+                        <option value="dracula">Dracula</option>
+                        <option value="monokai">Monokai</option>
+                        <option value="solarized">Solarized Dark</option>
+                        <option value="nord">Nord</option>
+                        <option value="night-owl">Night Owl</option>
+                    </select></div>
+                <h2>Class name</h2><input type="text" id="class-name" class="form-control" value="Model">
+                <div class="checkboxes-section">
+                    <div class="checkbox-row">
+                        <div class="checkbox-item"><input type="checkbox" id="gen-json" checked><label
+                                for="gen-json">Generate <span class="code">toJson</span> method</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="use-serializable"><label
+                                for="use-serializable">Use <span class="code">JSONSerializable</span></label></div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item"><input type="checkbox" id="gen-cpy"><label for="gen-cpy">Generate
+                                <span class="code">copyWith</span> method</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="use-equatable"><label
+                                for="use-equatable">Use <span class="code">Equatable</span></label></div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item"><input type="checkbox" id="gen-ts"><label for="gen-ts">Generate <span
+                                    class="code">toString</span> method</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="use-default" checked><label
+                                for="use-default">Use default value<span class="tooltip">ⓘ<span
+                                        class="tooltip-text">Makes properties non-nullable with default
+                                        values</span></span></label></div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item"><input type="checkbox" id="gen-key"><label for="gen-key">Generate
+                                JSON keys</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="gen-comment"><label
+                                for="gen-comment">Generate json as comment</label></div>
+                    </div>
+                    <div class="checkbox-row">
+                        <div class="checkbox-item"><input type="checkbox" id="use-num"><label for="use-num">Always use
+                                <span class="code">num</span> type</label></div>
+                        <div class="checkbox-item"><input type="checkbox" id="use-base-model"><label
+                                for="use-base-model">Use Base Model<span class="tooltip">ⓘ<span
+                                        class="tooltip-text">Extend from Model with helper methods</span></span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="editor-wrapper"><textarea id="json-input" class="editor"></textarea><button id="convert-btn"
+                        class="btn btn-primary">Convert</button></div>
+            </div>
+            <div class="panel output-panel">
+                <h2>Output</h2>
+                <div class="editor-wrapper"><textarea id="dart-output" class="editor hidden" readonly></textarea>
+                    <pre id="dart-output-pre"><code id="dart-code" class="language-dart"></code></pre><button
+                        id="copy-btn" class="btn btn-primary">Copy Code</button>
+                </div>
+            </div>
+        </div>
+        <!-- <div class="history-panel">
+            <h2>History</h2>
+            <div id="history-list"></div>
+        </div> -->
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-dart.min.js"></script>
+    <script>
+        class G { constructor() { this.reset() } reset() { this.r = new Map; this.g = []; this.u = new Set; this.s = new Map; this.o = "" } async gen(e, t, s = {}) { try { this.reset(), this.o = t; const a = JSON.parse(t), n = Array.isArray(a) ? a.length > 0 ? a[0] : {} : a; return this.proc(e, n, s), this.out(s) } catch (e) { throw new Error("Invalid JSON: " + e.message) } } proc(e, t, s) { const a = [{ c: e, o: t }], n = new Map; for (; a.length > 0;) { const { c: e, o: t } = a.shift(); if (!t || "object" != typeof t || Array.isArray(t)) continue; const r = this.sid(t); if (n.has(r)) continue; const i = this.uc(e); n.set(r, i), this.s.set(r, i), this.u.add(i); const o = []; Object.entries(t).forEach((([e, t]) => { if (this.iv(e)) { const r = this.tc(e), l = this.ap(e, t, i, n, a, s); o.push({ ...l, n: r, j: e }) } })), this.g.push({ n: i, p: o, s: r }), this.r.set(i, { n: i, p: o }) } } ap(e, t, s, a, n, r) { if (null === t) return { d: "dynamic", v: null }; if ("string" == typeof t) return { d: "String", v: '""' }; if ("boolean" == typeof t) return { d: "bool", v: "false" }; if ("number" == typeof t) return r.useNum ? { d: "num", v: "0" } : { d: Number.isInteger(t) ? "int" : "double", v: Number.isInteger(t) ? "0" : "0.0" }; if (Array.isArray(t)) { if (0 === t.length) return { d: "List<dynamic>", v: "[]" }; const r = t[0]; if ("object" == typeof r && null !== r) { const t = this.sid(r); if (a.has(t)) return { d: `List<${a.get(t)}>`, v: "[]" }; const i = this.nc(e, s); return n.push({ c: i, o: r }), { d: `List<${i}>`, v: "[]" } } return { d: `List<${this.st(r, r)}>`, v: "[]" } } if ("object" == typeof t) { const r = this.sid(t); if (a.has(r)) return { d: a.get(r), v: null }; const i = this.nc(e, s); return n.push({ c: i, o: t }), { d: i, v: null } } return { d: "dynamic", v: null } } nc(e, t) { let s = this.cap(this.tc(e)); const a = e.toLowerCase(); if ("data" === a) return "Datum"; if (["links", "attributes", "relationships"].includes(a)) return t + this.cap(e); if (["author", "user", "profile", "meta", "config", "settings"].includes(a)) return this.cap(e); return s.endsWith("ies") && s.length > 4 ? s = s.slice(0, -3) + "y" : s.match(/(ses|ches|shes|xes)$/) ? s = s.slice(0, -2) : s.endsWith("s") && !s.endsWith("ss") && s.length > 3 && (s = s.slice(0, -1)), s } out(e) { let t = this.imp(e); return this.g.forEach(((s, a) => { a > 0 && (t += "\n\n"), t += this.cls(s, e) })), e.generateComment && (t += "\n\n" + this.jc()), t } imp(e) { const t = []; return e.useBaseModel ? t.push("import 'base.dart';") : (e.useSerializable && t.push("import 'package:json_annotation/json_annotation.dart';"), e.useEquatable && t.push("import 'package:equatable/equatable.dart';"), e.useSerializable && (t.push(""), t.push("part 'model.g.dart';"))), t.length > 0 ? t.join("\n") + "\n\n" : "" } cls(e, t) { return t.useBaseModel ? this.bm(e, t) : this.std(e, t) } bm(e, t) { const { n: s, p: a } = e; let n = `class ${s} extends Model {\n`; a.forEach((e => { n += `    late ${e.d} ${e.n};\n` })), n += `\n    ${s}.fromJson([Map<String, dynamic>? json]) {\n`; const r = a.some((e => "id" === e.n)); return r || (n += '        id = stringFromJson(json, "id");\n'), a.forEach((e => { n += `        ${e.n} = ${this.bh(e, t)};\n` })), n += "    }\n", t.generateToJson && (n += "\n    @override\n    Map<String, dynamic> toJson() => {\n", r || (n += '        "id": id,\n'), a.forEach((e => { n += `        "${e.j}": ${this.tv(e)},\n` })), n += "    };\n"), n += "\n}", n } bh(e, t) { const { d: s, j: a, v: n } = e; if ("String" === s) return t.useDefaultValue && n ? `stringFromJson(json, "${a}") ?? ${n}` : `stringFromJson(json, "${a}")`; if ("int" === s) return t.useDefaultValue && n ? `intFromJson(json, "${a}") ?? ${n}` : `intFromJson(json, "${a}")`; if ("double" === s) return t.useDefaultValue && n ? `doubleFromJson(json, "${a}") ?? ${n}` : `doubleFromJson(json, "${a}")`; if ("bool" === s) return t.useDefaultValue && n ? `boolFromJson(json, "${a}") ?? ${n}` : `boolFromJson(json, "${a}")`; if (s.startsWith("List<")) { const e = s.match(/List<(.+)>/)[1]; return this.ipt(e) ? `(json?["${a}"] as List?)?.cast<${e}>() ?? []` : `listFromJson(json, "${a}", callback: (e) => ${e}.fromJson(e))` } return `${s}.fromJson(json?["${a}"])` } std(e, t) { const { n: s, p: a } = e; let n = ""; t.useSerializable && (n += "@JsonSerializable()\n"); const r = t.useEquatable ? " extends Equatable" : ""; n += `class ${s}${r} {\n`, n += `    ${s}({\n`, a.forEach((e => { const s = t.useDefaultValue ? "" : "required "; n += `        ${s}this.${e.n},\n` })), n += "    });\n\n", a.forEach(((e, i) => { t.generateKeys && t.useSerializable && (n += `    @JsonKey(name: '${e.j}')\n`); const s = t.useDefaultValue ? "" : "?"; n += `    final ${e.d}${s} ${e.n};\n`, i < a.length - 1 && (n += "\n") })), n += "\n", n += this.fj(s, a, t), t.generateToJson && (n += "\n" + this.tj(s, a, t)), t.generateCopyWith && (n += "\n" + this.cw(s, a, t)), t.generateToString && (n += "\n" + this.ts(s, a, t)), n += "\n}"; return n } fj(e, t, s) { if (s.useSerializable) return `    factory ${e}.fromJson(Map<String, dynamic> json) => _$${e}FromJson(json);\n`; let a = `    factory ${e}.fromJson(Map<String, dynamic> json){ \n`; return a += `        return ${e}(\n`, t.forEach((e => { a += `            ${e.n}: ${this.fv(e, s)},\n` })), a += "        );\n    }\n", a } fv(e, t) { const { d: s, j: a, v: n } = e; if (s.startsWith("List<")) { const e = s.match(/List<(.+)>/)[1]; return this.ipt(e) ? `json["${a}"] == null ? [] : List<${e}>.from(json["${a}"])` : `json["${a}"] == null ? [] : List<${e}>.from(json["${a}"]!.map((x) => ${e}.fromJson(x)))` } return this.ipt(s) ? t.useDefaultValue && n ? `json["${a}"] ?? ${n}` : `json["${a}"]` : `json["${a}"] == null ? null : ${s}.fromJson(json["${a}"])` } tj(e, t, s) { if (s.useSerializable) return `    Map<String, dynamic> toJson() => _$${e}ToJson(this);\n`; let a = "    Map<String, dynamic> toJson() => {\n"; return t.forEach((e => { a += `        "${e.j}": ${this.tv(e, s.useDefaultValue)},\n` })), a += "    };\n", a } tv(e, t = !1) { const { d: s, n: a } = e; if (s.startsWith("List<")) { const e = s.match(/List<(.+)>/)[1]; return this.ipt(e) ? a : t ? `${a}.map((x) => x.toJson()).toList()` : `${a}?.map((x) => x.toJson()).toList()` } return this.ipt(s) ? a : t ? `${a}.toJson()` : `${a}?.toJson()` } cw(e, t, s) { let a = `    ${e} copyWith({\n`; return t.forEach((e => { const t = s.useDefaultValue ? "" : "?"; a += `        ${e.d}${t} ${e.n},\n` })), a += `    }) => ${e}(\n`, t.forEach((e => { a += `        ${e.n}: ${e.n} ?? this.${e.n},\n` })), a += "    );\n", a } ts(e, t, s) { if (s.useEquatable) { const e = t.map((e => e.n)).join(", "); return `    @override\n    List<Object?> get props => [${e}];\n` } const a = t.map((e => `${e.n}: \$${e.n}`)).join(", "); return `    @override\n    String toString() => '${e}(${a})';\n` } jc() { return JSON.stringify(JSON.parse(this.o), null, 2).split("\n").map((e => "// " + e)).join("\n") } sid(e) { return Object.keys(e).sort().map((t => { const s = e[t]; let a = typeof s; return Array.isArray(s) ? a = s.length > 0 && "object" == typeof s[0] ? "array_object" : "array_primitive" : "object" === a && null !== s && (a = "object"), `${t}:${a}` })).join("|") } st(e, t) { return "string" == typeof e ? "String" : "boolean" == typeof e ? "bool" : "number" == typeof e ? t && t.useNum ? "num" : Number.isInteger(e) ? "int" : "double" : "dynamic" } ipt(e) { return ["String", "int", "double", "bool", "num", "dynamic"].includes(e) } uc(e) { let t = this.cap(this.tc(e)), s = 1; for (; this.u.has(t);)t = this.cap(this.tc(e)) + s++; return t } iv(e) { return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(e) } tc(e) { return e.replace(/_([a-z])/g, ((e, t) => t.toUpperCase())) } cap(e) { return e.charAt(0).toUpperCase() + e.slice(1) } }
+        class App { constructor() { this.gen = new G; this.his = []; this.init() } init() { this.loadH(); this.bind(); this.loadS() } bind() { const t = this; document.getElementById("convert-btn").addEventListener("click", (function () { t.conv() })); document.getElementById("copy-btn").addEventListener("click", (function () { t.copy() })); document.getElementById("theme-select").addEventListener("change", (function (e) { t.changeTheme(e.target.value) }));["gen-json", "gen-cpy", "gen-ts", "gen-key", "use-num", "use-serializable", "use-equatable", "use-default", "gen-comment", "use-base-model"].forEach((function (e) { const s = document.getElementById(e); s && s.addEventListener("change", (function () { t.dbc() })) })) } changeTheme(e) { const t = { tomorrow: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css", dracula: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-dracula.min.css", monokai: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css", solarized: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-solarizedlight.min.css", nord: "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-nord.min.css", "night-owl": "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" }[e]; document.getElementById("theme-link").href = t; localStorage.setItem("dart-theme", e); const s = document.getElementById("dart-code"); s.textContent && Prism.highlightElement(s) } dbc() { const t = this; clearTimeout(this.t); this.t = setTimeout((function () { const e = document.getElementById("json-input"); e && e.value.trim() && t.conv() }), 300) } loadS() { const e = localStorage.getItem("dart-theme") || "tomorrow"; document.getElementById("theme-select").value = e; this.changeTheme(e); document.getElementById("json-input").value = JSON.stringify({ users: [{ id: 1, firstName: "Emily", lastName: "Johnson", age: 28, hair: { color: "Brown", type: "Curly" }, address: { address: "626 Main Street", city: "Phoenix", coordinates: { lat: -77.16213, lng: -92.084824 } } }], total: 208 }, null, 4) } conv() { const t = this; const e = document.getElementById("json-input").value.trim(); const s = document.getElementById("class-name").value.trim() || "Model"; if (!e) return; try { const a = { generateToJson: document.getElementById("gen-json").checked, generateCopyWith: document.getElementById("gen-cpy").checked, generateToString: document.getElementById("gen-ts").checked, generateKeys: document.getElementById("gen-key").checked, useNum: document.getElementById("use-num").checked, useSerializable: document.getElementById("use-serializable").checked, useEquatable: document.getElementById("use-equatable").checked, useDefaultValue: document.getElementById("use-default").checked, generateComment: document.getElementById("gen-comment").checked, useBaseModel: document.getElementById("use-base-model").checked }; this.gen.gen(s, e, a).then((function (e) { document.getElementById("dart-output").value = e; document.getElementById("dart-code").textContent = e; Prism.highlightElement(document.getElementById("dart-code")); document.getElementById("dart-output").classList.add("hidden"); document.getElementById("dart-output-pre").classList.add("active"); t.addH(s, e) })) } catch (e) { const t = "// Error: " + e.message; document.getElementById("dart-output").value = t; document.getElementById("dart-code").textContent = t; document.getElementById("dart-output").classList.remove("hidden"); document.getElementById("dart-output-pre").classList.remove("active") } } copy() { const e = document.getElementById("dart-output").value; navigator.clipboard.writeText(e).then((function () { const e = document.getElementById("copy-btn"); const t = e.textContent; e.textContent = "Copied!"; setTimeout((function () { e.textContent = t }), 1e3) })).catch((function () { const e = document.getElementById("dart-output"); e.select(); document.execCommand("copy") })) } addH(e, t) { const s = { className: e, json: t, time: (new Date).toLocaleString() }; this.his.unshift(s); this.his.length > 10 && (this.his = this.his.slice(0, 10)); this.saveH(); this.renH() } renH() { const t = this; document.getElementById("history-list").innerHTML = this.his.map((function (e, s) { return `<div class="history-item" onclick="app.selH(${s})">${e.className}</div>` })).join("") } selH(e) { const t = this.his[e]; document.getElementById("class-name").value = t.className; document.getElementById("json-input").value = t.json; this.conv() } saveH() { try { localStorage.setItem("dart-history", JSON.stringify(this.his)) } catch (e) { } } loadH() { try { this.his = JSON.parse(localStorage.getItem("dart-history") || "[]"); this.renH() } catch (e) { this.his = [] } } }
+        const app = new App;
+    </script>
+</body>
+
+</html>
